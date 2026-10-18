@@ -1,0 +1,28 @@
+# Normalise line endings so CI and local agree.
+* text=auto eol=lf
+
+*.cs      text eol=lf diff=csharp
+*.csproj  text eol=lf
+*.slnx    text eol=lf
+*.props   text eol=lf
+*.targets text eol=lf
+*.bicep   text eol=lf
+*.sh      text eol=lf
+Makefile  text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary
+
+# Excalidraw sources are JSON; the exported SVG is generated.
+# Both are committed (see ADR-0015) but the SVG should not clutter review.
+*.excalidraw    text eol=lf
+docs/**/*.svg   text eol=lf linguist-generated=true -diff
+
+# Generated lockfiles: keep in git, hide from diffs.
+package-lock.json text eol=lf linguist-generated=true -diff

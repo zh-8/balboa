@@ -1,0 +1,68 @@
+# ---- .NET ----
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+*.userprefs
+.vs/
+TestResults/
+coverage/
+*.coverage
+*.coverlet.json
+coverage.*.json
+coverage.*.xml
+*.trx
+
+# ---- Node / Angular ----
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+npm-debug.log*
+.npm/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# ---- Environment / secrets ----
+# Never commit secrets. See CLAUDE.md "no secrets in git".
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+appsettings.Development.local.json
+appsettings.*.local.json
+
+# ---- Azure / IaC ----
+.azure/
+*.azurite*
+__azurite*
+# Bicep build output (generated from .bicep; never hand-edited)
+infra/**/*.json
+!infra/**/*.bicepparam
+!infra/bootstrap/github/rulesets/*.json
+
+# ---- Tooling ----
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ---- Claude Code ----
+# The bingo agent definition IS committed; local overrides are not.
+.claude/settings.local.json
