@@ -118,11 +118,16 @@ jobs:
           echo "Resolved: $image"
           echo "- Image: \`$image\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build frontend
+      # The API base URL is baked in at build time, so the bundle is
+      # environment-specific: `build:dev` points at api.dev.balboa.cairobits.com.
+      # When prod lands it needs its own build (`npm run build`) and its own
+      # artifact — the same bundle cannot be promoted across environments the way
+      # the container image can.
+      - name: Build frontend (dev configuration)
         working-directory: frontend
         run: |
           npm ci
-          npm run build
+          npm run build:dev
 
       - name: Upload frontend build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -164,8 +169,8 @@ jobs:
       - name: Run Playwright smoke tests
         working-directory: frontend
         env:
-          E2E_BASE_URL: ${{ needs.deploy-dev.outputs.frontend-url }}
-          E2E_API_URL: ${{ needs.deploy-dev.outputs.api-url }}
+          BALBOA_BASE_URL: ${{ needs.deploy-dev.outputs.frontend-url }}
+          BALBOA_API_URL: ${{ needs.deploy-dev.outputs.api-url }}
         run: |
           npm ci
           npx playwright install --with-deps chromium
