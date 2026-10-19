@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain + Application tests. No Docker, no database. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Unit tests run against synchronous in-memory fakes; there is no IO to cancel. -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Balboa.TestKit\Balboa.TestKit.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\Sample\Balboa.Modules.Sample.Application\Balboa.Modules.Sample.Application.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\Sample\Balboa.Modules.Sample.Contracts\Balboa.Modules.Sample.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\Sample\Balboa.Modules.Sample.Domain\Balboa.Modules.Sample.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+    <Using Include="Balboa.TestKit" />
+  </ItemGroup>
+
+</Project>

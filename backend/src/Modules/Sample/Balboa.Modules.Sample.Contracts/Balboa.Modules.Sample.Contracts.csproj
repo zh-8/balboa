@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PUBLIC surface of the Sample module: records and interfaces only. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Balboa.SharedKernel\Balboa.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Balboa.BuildingBlocks\Balboa.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+</Project>

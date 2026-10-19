@@ -18,8 +18,8 @@ ENV      ?= dev
 
 # Treat these as commands, not files.
 .PHONY: help setup build test test-unit test-arch test-int test-fe lint lint-be lint-fe \
-        lint-docs fmt fmt-check run migrate diagrams diagrams-check spec-check \
-        infra-lint what-if coverage clean ci
+        lint-docs fmt fmt-check run run-fe db db-stop migrate diagrams diagrams-check \
+        spec-check infra-lint what-if coverage clean ci
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -51,17 +51,25 @@ build: ## Build backend and frontend
 
 test: test-unit test-arch test-fe ## Fast tests: unit + architecture + frontend (no Docker)
 
+# xUnit v3 runs on Microsoft.Testing.Platform (see the "test" block in
+# global.json), so the CLI surface differs from VSTest:
+#   --solution, not a bare path
+#   --filter-trait / --filter-not-trait, not --filter "Category=..."
+#   --ignore-exit-code 8 because exit code 8 means "no tests ran", which is the
+#   correct outcome for an assembly that holds only the filtered-out category.
 test-unit: ## Backend unit tests (Domain + Application)
-	dotnet test $(SLN) --no-restore -c Release \
-		--filter "Category!=Integration" \
-		-- --report-trx
+	dotnet test --solution $(SLN) -c Release \
+		--filter-not-trait "Category=Integration" \
+		--ignore-exit-code 8
 
 test-arch: ## Architecture tests (module boundaries, layering)
-	dotnet test $(BACKEND)/tests/Balboa.ArchitectureTests -c Release
+	dotnet test --project $(BACKEND)/tests/Balboa.ArchitectureTests -c Release
 
 test-int: ## Integration + API tests against real Postgres (requires Docker)
 	@docker info >/dev/null 2>&1 || { echo "Docker is not running; test-int needs it."; exit 1; }
-	dotnet test $(SLN) --no-restore -c Release --filter "Category=Integration"
+	dotnet test --solution $(SLN) -c Release \
+		--filter-trait "Category=Integration" \
+		--ignore-exit-code 8
 
 test-fe: ## Frontend unit tests (Vitest)
 	cd $(FRONTEND) && npm run test -- --run
@@ -102,10 +110,24 @@ fmt-check: ## Verify formatting without writing (CI uses this)
 # Run
 # ---------------------------------------------------------------------------
 
-run: ## Run the whole stack locally via Aspire (API + Angular + Postgres container)
-	dotnet run --project $(BACKEND)/src/Balboa.AppHost
+# Aspire was the intended orchestrator, but its restore pulls several large
+# packages (Aspire.Hosting.Orchestration, Grpc.Tools, KubernetesClient) that
+# repeatedly timed out on this network. docker compose does the same job here
+# with no restore cost. See ADR-0019.
+run: db ## Run the API locally against a Postgres container
+	dotnet run --project $(BACKEND)/src/Balboa.Host -- migrate
+	dotnet run --project $(BACKEND)/src/Balboa.Host
 
-migrate: ## Apply EF migrations to the local database
+run-fe: ## Run the Angular dev server (expects `make run` in another terminal)
+	cd $(FRONTEND) && npm start
+
+db: ## Start the local Postgres container and wait for it to be healthy
+	docker compose -f $(BACKEND)/docker-compose.yml up -d --wait
+
+db-stop: ## Stop the local Postgres container
+	docker compose -f $(BACKEND)/docker-compose.yml down
+
+migrate: db ## Apply EF migrations to the local database
 	dotnet run --project $(BACKEND)/src/Balboa.Host -- migrate
 
 # ---------------------------------------------------------------------------

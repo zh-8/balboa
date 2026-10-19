@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared test infrastructure: Postgres fixture, Respawn reset, Bogus data, the [Spec] trait. -->
+  <ItemGroup>
+    <PackageReference Include="Bogus" />
+    <PackageReference Include="Respawn" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
+  </ItemGroup>
+
+</Project>

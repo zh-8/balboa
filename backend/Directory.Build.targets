@@ -1,0 +1,40 @@
+<Project>
+
+  <!--
+    MODULE GUARD (CLAUDE.md section 5, layer 1). Fastest feedback: runs before every build.
+
+    Rule 1. A project under src/Modules/X/ may reference a project under src/Modules/Y/ (Y != X)
+            only if the referenced assembly name ends in ".Contracts".
+    Rule 2. A "*.Domain" project may reference nothing except Balboa.SharedKernel.
+
+    The assembly name of a referenced project is taken to be its file name (we never override
+    AssemblyName in this repo), so the check needs no evaluation of the other project.
+  -->
+  <Target Name="BalboaModuleGuard" BeforeTargets="BeforeBuild;BeforeResolveReferences">
+
+    <PropertyGroup>
+      <_BalboaThisPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)').Replace('\', '/'))/</_BalboaThisPath>
+      <_BalboaThisModule>$([System.Text.RegularExpressions.Regex]::Match('$(_BalboaThisPath)', '/src/Modules/([^/]+)/').Groups[1].Value)</_BalboaThisModule>
+      <_BalboaIsDomain Condition="$(MSBuildProjectName.EndsWith('.Domain'))">true</_BalboaIsDomain>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'@(ProjectReference)' != ''">
+      <_BalboaRef Include="@(ProjectReference)">
+        <RefName>%(Filename)</RefName>
+        <RefModule>$([System.Text.RegularExpressions.Regex]::Match('%(FullPath)', '[/\\]src[/\\]Modules[/\\]([^/\\]+)[/\\]').Groups[1].Value)</RefModule>
+      </_BalboaRef>
+    </ItemGroup>
+
+    <!-- Rule 1 -->
+    <Error Condition="'$(_BalboaThisModule)' != '' And '%(_BalboaRef.RefModule)' != '' And '%(_BalboaRef.RefModule)' != '$(_BalboaThisModule)' And !$([System.String]::Copy('%(_BalboaRef.RefName)').EndsWith('.Contracts'))"
+           Code="BALBOA001"
+           Text="Module boundary violation: '$(MSBuildProjectName)' (module '$(_BalboaThisModule)') references '%(_BalboaRef.RefName)' (module '%(_BalboaRef.RefModule)'). A module may reference another module only through that module's '.Contracts' project. Reference '%(_BalboaRef.RefName)' is not a Contracts assembly. See CLAUDE.md section 5." />
+
+    <!-- Rule 2 -->
+    <Error Condition="'$(_BalboaIsDomain)' == 'true' And '%(_BalboaRef.RefName)' != '' And '%(_BalboaRef.RefName)' != 'Balboa.SharedKernel'"
+           Code="BALBOA002"
+           Text="Domain purity violation: '$(MSBuildProjectName)' references '%(_BalboaRef.RefName)'. A '*.Domain' project may reference only 'Balboa.SharedKernel'. Domain code has no framework, IO or cross-layer dependencies. See CLAUDE.md section 5." />
+
+  </Target>
+
+</Project>

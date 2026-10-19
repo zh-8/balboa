@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain references ONLY SharedKernel (enforced by Directory.Build.targets). -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Balboa.SharedKernel\Balboa.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Application: handlers over ports. No reference to Infrastructure. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Balboa.Modules.Sample.Contracts\Balboa.Modules.Sample.Contracts.csproj" />
+    <ProjectReference Include="..\Balboa.Modules.Sample.Domain\Balboa.Modules.Sample.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Balboa.SharedKernel\Balboa.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Balboa.BuildingBlocks\Balboa.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+  <!-- Internals are visible only to this module's own sibling project and its tests. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Balboa.Modules.Sample.Infrastructure" />
+    <InternalsVisibleTo Include="Balboa.Modules.Sample.UnitTests" />
+    <InternalsVisibleTo Include="Balboa.Modules.Sample.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

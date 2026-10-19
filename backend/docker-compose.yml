@@ -1,0 +1,27 @@
+# Local development database for Balboa (Postgres 17). Used by `make run`.
+#
+#   docker compose -f backend/docker-compose.yml up -d --wait
+#
+# SECURITY: trust authentication means "no password". That is only acceptable because the port is bound to
+# loopback and the data is throwaway. Never reuse this file for anything reachable from a network.
+# Production uses Entra managed-identity tokens, so there is no password to leak (see CLAUDE.md section 4).
+services:
+  postgres:
+    image: ${BALBOA_PG_IMAGE:-postgres:17}
+    environment:
+      POSTGRES_DB: balboa
+      POSTGRES_USER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      # Override with BALBOA_PG_PORT if 5432 is taken; then also set ConnectionStrings__balboa for the Host.
+      - "127.0.0.1:${BALBOA_PG_PORT:-5432}:5432"
+    volumes:
+      - balboa-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d balboa"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  balboa-pgdata:

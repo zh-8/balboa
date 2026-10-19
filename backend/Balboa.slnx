@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Balboa.BuildingBlocks/Balboa.BuildingBlocks.csproj" />
+    <Project Path="src/Balboa.Host/Balboa.Host.csproj" />
+    <Project Path="src/Balboa.ServiceDefaults/Balboa.ServiceDefaults.csproj" />
+    <Project Path="src/Balboa.SharedKernel/Balboa.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Sample/">
+    <Project Path="src/Modules/Sample/Balboa.Modules.Sample.Application/Balboa.Modules.Sample.Application.csproj" />
+    <Project Path="src/Modules/Sample/Balboa.Modules.Sample.Contracts/Balboa.Modules.Sample.Contracts.csproj" />
+    <Project Path="src/Modules/Sample/Balboa.Modules.Sample.Domain/Balboa.Modules.Sample.Domain.csproj" />
+    <Project Path="src/Modules/Sample/Balboa.Modules.Sample.Infrastructure/Balboa.Modules.Sample.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Balboa.ArchitectureTests/Balboa.ArchitectureTests.csproj" />
+    <Project Path="tests/Balboa.Host.ApiTests/Balboa.Host.ApiTests.csproj" />
+    <Project Path="tests/Balboa.TestKit/Balboa.TestKit.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Sample/">
+    <Project Path="tests/Modules/Sample/Balboa.Modules.Sample.IntegrationTests/Balboa.Modules.Sample.IntegrationTests.csproj" />
+    <Project Path="tests/Modules/Sample/Balboa.Modules.Sample.UnitTests/Balboa.Modules.Sample.UnitTests.csproj" />
+  </Folder>
+</Solution>

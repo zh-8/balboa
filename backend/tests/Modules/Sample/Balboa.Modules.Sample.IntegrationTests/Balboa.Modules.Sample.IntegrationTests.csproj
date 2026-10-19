@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Real Postgres 17 (Testcontainers) with the real migrations applied. Needs Docker. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Balboa.TestKit\Balboa.TestKit.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\Sample\Balboa.Modules.Sample.Infrastructure\Balboa.Modules.Sample.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+    <Using Include="Balboa.TestKit" />
+  </ItemGroup>
+
+</Project>

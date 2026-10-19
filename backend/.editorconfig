@@ -1,0 +1,12 @@
+# Backend-specific analyzer tuning. Inherits the repo-root .editorconfig (root = true there).
+
+[*.cs]
+# 'Error' / 'Result' are the idiomatic names for the Result pattern; VB keyword clashes are irrelevant here.
+dotnet_diagnostic.CA1716.severity = none
+# IDomainEventHandler / IIntegrationEventHandler are not .NET event handlers.
+dotnet_diagnostic.CA1711.severity = none
+
+# EF Core generated migrations: never hand-edited, exempt from style and analyzer rules.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
