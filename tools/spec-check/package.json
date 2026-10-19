@@ -1,0 +1,17 @@
+{
+  "name": "balboa-spec-check",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Spec-to-test traceability checker and docs linter for Balboa (ADR-0013).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node check.mjs",
+    "lint:docs": "cd ../.. && tools/spec-check/node_modules/.bin/markdownlint-cli2 --config .markdownlint-cli2.jsonc"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "0.18.1"
+  }
+}

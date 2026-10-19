@@ -1,0 +1,13 @@
+{
+  "name": "balboa-diagrams",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure-Node Excalidraw to SVG exporter and freshness check (ADR-0015). No dependencies, no browser.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "export": "node export.mjs",
+    "check": "node check.mjs",
+    "author": "node src/diagrams.mjs"
+  }
+}

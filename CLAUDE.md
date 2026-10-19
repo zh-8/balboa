@@ -38,7 +38,7 @@ Never invent a new script when a target exists. If you need a new capability, ad
 
 ## 3. Repo map
 
-```
+```text
 backend/          .NET 10 modular monolith
   src/
     Balboa.Host/            composition root, minimal APIs, health, `migrate` command

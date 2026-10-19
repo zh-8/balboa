@@ -2,7 +2,7 @@
 
 > **Not yet exercised.** This describes the PLANNED Azure setup. No Balboa resources exist
 > yet (subscription in `Warned` state). Commands are unverified drafts.
-
+>
 > **WARNING: never name, target or scope anything above `rg-cairobits`.** `rg-cairobits` and
 > the `cairobits` Static Web App are an unrelated project in the same subscription. Never run
 > a subscription-wide delete, never delete by tag or wildcard across the subscription, and

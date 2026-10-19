@@ -54,7 +54,7 @@ Conventions, module recipe and the risk policy live in [CLAUDE.md](CLAUDE.md).
 
 ## Repository layout
 
-```
+```text
 backend/   .NET solution: host, shared kernel, building blocks, modules, tests
 frontend/  Angular workspace
 infra/     Bicep — bootstrap (run once by a human) and per-environment stacks
