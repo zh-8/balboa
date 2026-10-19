@@ -1,0 +1,118 @@
+# Dependency updates, grouped so a week's drift is one or two PRs rather than
+# twenty. Every PR still has to pass `ci-ok`, so a bad bump cannot merge.
+
+version: 2
+
+updates:
+  # ---- Backend (.NET, Central Package Management) ----
+  - package-ecosystem: nuget
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Cairo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: scope
+    groups:
+      # Framework packages move together; splitting them produces PRs that
+      # cannot build on their own.
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "Microsoft.AspNetCore.*"
+      entity-framework:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+          - "Npgsql*"
+      opentelemetry:
+        patterns:
+          - "OpenTelemetry*"
+          - "Azure.Monitor.OpenTelemetry*"
+      test-stack:
+        patterns:
+          - "xunit*"
+          - "Shouldly"
+          - "NSubstitute*"
+          - "Testcontainers*"
+          - "Respawn"
+          - "Bogus"
+          - "coverlet*"
+          - "ArchUnitNET*"
+          - "Microsoft.NET.Test.Sdk"
+      azure-sdk:
+        patterns:
+          - "Azure.*"
+          - "!Azure.Monitor.OpenTelemetry*"
+
+  # ---- Frontend ----
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Cairo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: scope
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "angular-eslint"
+          - "typescript"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "@playwright/*"
+          - "playwright"
+      linting:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier*"
+          - "@softarc/*"
+      # Majors separately: they usually need code changes, so they should not
+      # be buried in a group with safe patches.
+      all-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # ---- Tooling ----
+  - package-ecosystem: npm
+    directory: /tools/diagrams
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore"
+
+  - package-ecosystem: npm
+    directory: /tools/spec-check
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore"
+
+  # ---- GitHub Actions ----
+  # Actions are pinned by SHA, which means they never update on their own.
+  # This is what keeps them current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]

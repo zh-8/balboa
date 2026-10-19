@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture decisions
+    url: https://github.com/zh-8/balboa/tree/main/docs/adr
+    about: Why things are built the way they are — check here before proposing a change.
+  - name: Runbooks
+    url: https://github.com/zh-8/balboa/tree/main/docs/runbooks
+    about: Operational procedures — bootstrap, deploy, rollback, restore.

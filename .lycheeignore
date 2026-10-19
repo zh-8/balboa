@@ -1,0 +1,7 @@
+# Links lychee should skip, one pattern per line.
+#
+# Diagram SVGs: docs/architecture/overview.md references them before the first
+# `make diagrams` run has produced them. Freshness is already enforced by
+# `make diagrams-check`, which compares an embedded source hash against the
+# .excalidraw source — a stronger check than "the file exists".
+diagrams/.*\.svg

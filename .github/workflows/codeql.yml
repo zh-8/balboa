@@ -1,0 +1,67 @@
+# CodeQL static analysis.
+#
+# Free on public repositories. Runs on PRs for fast feedback, on main as the
+# record of record, and weekly so newly published queries find old code.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Mondays 04:17 UTC. Off the hour, because every cron on the hour queues.
+    - cron: "17 4 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload the SARIF results
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        if: matrix.language == 'csharp'
+        with:
+          global-json-file: global.json
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@d208ec71e39ae46397cbf6569bef8439b9aab974 # codeql-bundle-v2.27.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-and-quality
+
+      # C# needs a real build so CodeQL can see the compiled IL. Analyzers are
+      # errors in this repo, so a lint regression fails here too — acceptable,
+      # since CI would already have caught it.
+      - name: Build (C#)
+        if: matrix.language == 'csharp'
+        run: |
+          dotnet restore backend/Balboa.slnx
+          dotnet build backend/Balboa.slnx --no-restore -c Release
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@d208ec71e39ae46397cbf6569bef8439b9aab974 # codeql-bundle-v2.27.2
+        with:
+          category: /language:${{ matrix.language }}

@@ -1,0 +1,93 @@
+name: Bug
+description: Something behaves incorrectly.
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A bug fix starts with a failing test that reproduces it (ADR-0014). The clearer
+        the reproduction here, the faster that test gets written.
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include the exact error message or response, not a paraphrase.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Smallest sequence of steps that triggers it.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Backend (API / domain)
+        - Frontend (Angular)
+        - Infrastructure / deploy
+        - Local development
+        - CI
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local
+        - Dev
+        - Production
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit or image digest
+      description: >
+        `git rev-parse HEAD` locally, or the image digest from the deploy job summary.
+        Pins the report to exactly what was running.
+    validations:
+      required: false
+
+  - type: textarea
+    id: spec
+    attributes:
+      label: Related spec or AC
+      description: >
+        If this contradicts an acceptance criterion, name it — the criterion may be
+        wrong rather than the code.
+      placeholder: AC-0001-04
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or trace
+      description: >
+        Relevant output. Redact anything sensitive — this repository is public.
+      render: text
+    validations:
+      required: false

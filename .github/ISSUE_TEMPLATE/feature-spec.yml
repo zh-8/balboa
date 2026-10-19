@@ -1,0 +1,90 @@
+name: Feature (spec)
+description: Propose a change that needs a spec before any code is written.
+title: "[spec] "
+labels: ["spec", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Balboa is spec-driven (ADR-0013): the spec comes before the code, and every
+        acceptance criterion ends up with a test tagged to its ID. This issue becomes
+        `docs/specs/SPEC-NNNN-<slug>/spec.md`.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing today? Describe the situation, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What is true once this is done?
+    validations:
+      required: true
+
+  - type: input
+    id: module
+    attributes:
+      label: Module / bounded context
+      description: >
+        Which module does this belong to? If it needs a new one, say so — a new bounded
+        context is an architectural decision and needs an ADR too.
+      placeholder: 'Sample (placeholder), or "new - Billing"'
+    validations:
+      required: true
+
+  - type: textarea
+    id: language
+    attributes:
+      label: Ubiquitous language
+      description: >
+        New domain terms this introduces, with definitions. These go into
+        docs/glossary.md and must be used verbatim in code.
+      placeholder: |
+        - Term — definition
+    validations:
+      required: false
+
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: Given/When/Then, one per line. Each becomes an AC-NNNN-NN with a test.
+      placeholder: |
+        - Given a widget with code WGT-001, when it is retired, then a WidgetCatalogItemRetired event is raised
+        - Given an already retired widget, when it is retired again, then nothing happens
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: What this deliberately does not cover. Prevents scope creep later.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: >
+        High risk means infrastructure, identity, migrations, security or release
+        gates — these are planned on Opus and need explicit approval (CLAUDE.md §8).
+      options:
+        - Routine
+        - High risk
+    validations:
+      required: true
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: Anything genuinely undecided. Better recorded than guessed.
+    validations:
+      required: false

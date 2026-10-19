@@ -1,0 +1,42 @@
+{
+  // Markdown lint rules. Deliberately permissive where the default rule fights
+  // technical writing, strict where inconsistency actually hurts readability.
+  "config": {
+    "default": true,
+
+    // Line length: prose wraps at 100, but tables, code blocks and long URLs
+    // cannot be wrapped without making them worse.
+    "MD013": {
+      "line_length": 100,
+      "tables": false,
+      "code_blocks": false,
+      "headings": false
+    },
+
+    // Duplicate headings are fine when nested under different parents —
+    // every ADR has "Context", every runbook has "Verify".
+    "MD024": { "siblings_only": true },
+
+    // A document may legitimately open with front matter or a note before the
+    // H1, and ADR/spec templates do.
+    "MD041": false,
+
+    // Inline HTML is needed for the diagram figures and template comments.
+    "MD033": false,
+
+    // Bare URLs are flagged; we always use proper links, so keep this on.
+    "MD034": true,
+
+    // Emphasis used as a heading — the templates use bold labels like
+    // **Why:** inside list items, which is intentional.
+    "MD036": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/bin/**",
+    "**/obj/**",
+    ".github/ISSUE_TEMPLATE/**"
+  ]
+}

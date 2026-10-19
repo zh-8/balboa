@@ -1,0 +1,217 @@
+# Reusable deploy. Called by main.yml for dev, and later by release-prod.yml for
+# prod — the same code path both times, so prod is never the first time a step
+# runs.
+#
+# Authentication is OIDC against a user-assigned managed identity whose federated
+# credential is pinned to `repo:<owner>/<repo>:environment:<env>` (ADR-0009). The
+# `environment:` key below is therefore load-bearing: without it the token's
+# subject will not match and the login fails. There are no stored Azure
+# credentials.
+#
+# ORDERING AND MIGRATIONS
+#   Bicep is applied first (updating both the job definition and the app), then
+#   migrations run, then readiness is checked. This is only safe because
+#   migrations are expand/contract: new code tolerates the old schema and old code
+#   tolerates the new one. A destructive migration must be split across two
+#   releases. See docs/runbooks/deploy-rollback.md.
+
+name: Deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Target environment (dev or prod).
+        required: true
+        type: string
+      image:
+        description: API image pinned by digest, e.g. ghcr.io/zh-8/balboa-api@sha256:...
+        required: true
+        type: string
+      frontend-artifact:
+        description: Name of the uploaded Angular build artifact.
+        required: false
+        type: string
+        default: frontend-dist
+    outputs:
+      api-url:
+        description: Public base URL of the deployed API.
+        value: ${{ jobs.deploy.outputs.api-url }}
+      frontend-url:
+        description: Public base URL of the deployed frontend.
+        value: ${{ jobs.deploy.outputs.frontend-url }}
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write # the OIDC token; nothing else needs writing
+    outputs:
+      api-url: ${{ steps.stack.outputs.api-url }}
+      frontend-url: ${{ steps.stack.outputs.frontend-url }}
+    env:
+      # Set by bootstrap.sh as GitHub environment variables. None is a secret.
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      BALBOA_LOG_ANALYTICS_ID: ${{ vars.BALBOA_LOG_ANALYTICS_ID }}
+      BALBOA_ADMIN_OBJECT_ID: ${{ vars.BALBOA_ADMIN_OBJECT_ID }}
+      BALBOA_ADMIN_PRINCIPAL_NAME: ${{ vars.BALBOA_ADMIN_PRINCIPAL_NAME }}
+      BALBOA_API_IMAGE: ${{ inputs.image }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Guard — image must be digest-pinned
+        run: |
+          case "$BALBOA_API_IMAGE" in
+            *@sha256:*) echo "Image is digest-pinned." ;;
+            *) echo "::error::image must be pinned by digest, got '$BALBOA_API_IMAGE'"; exit 1 ;;
+          esac
+
+      - name: Azure login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      # Printed into the job summary so there is a reviewable record of what each
+      # deploy changed, which is the only audit trail a solo-maintainer repo has.
+      - name: What-if
+        run: |
+          {
+            echo "## Infrastructure changes — ${{ inputs.environment }}"
+            echo '```'
+            az deployment group what-if \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --template-file infra/bicep/main.bicep \
+              --parameters "infra/bicep/env/${{ inputs.environment }}.bicepparam" \
+              --no-pretty-print 2>&1 | tail -n 200
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy infrastructure
+        id: stack
+        run: |
+          outputs=$(az deployment group create \
+            --name "balboa-${{ inputs.environment }}-${GITHUB_SHA::7}" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/bicep/main.bicep \
+            --parameters "infra/bicep/env/${{ inputs.environment }}.bicepparam" \
+            --query properties.outputs -o json)
+
+          get() { jq -r ".[\"$1\"].value" <<<"$outputs"; }
+
+          api_fqdn=$(get apiFqdn)
+          swa_host=$(get staticWebAppDefaultHostname)
+
+          {
+            echo "api-url=https://$api_fqdn"
+            echo "frontend-url=https://$swa_host"
+            echo "migrate-job=$(get migrateJobName)"
+            echo "swa-name=$(get staticWebAppName)"
+            echo "api-name=$(get apiName)"
+            echo "cname-target=$(get apiCnameTarget)"
+            echo "domain-verification-id=$(get apiCustomDomainVerificationId)"
+          } >> "$GITHUB_OUTPUT"
+
+      # Separate identity from the API's: the migrator may run DDL, the API may
+      # not. A compromised API container cannot alter the schema.
+      - name: Run database migrations
+        run: |
+          job='${{ steps.stack.outputs.migrate-job }}'
+          echo "Starting migration job $job"
+          exec_name=$(az containerapp job start \
+            --name "$job" --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query name -o tsv)
+          echo "Execution: $exec_name"
+
+          for _ in $(seq 1 60); do
+            status=$(az containerapp job execution show \
+              --name "$job" --resource-group "$AZURE_RESOURCE_GROUP" \
+              --job-execution-name "$exec_name" \
+              --query properties.status -o tsv 2>/dev/null || echo Unknown)
+            echo "  status: $status"
+            case "$status" in
+              Succeeded) echo "Migrations applied."; exit 0 ;;
+              Failed|Cancelled)
+                echo "::error::migration job $status"
+                az containerapp job execution show --name "$job" \
+                  --resource-group "$AZURE_RESOURCE_GROUP" \
+                  --job-execution-name "$exec_name" -o json
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::migration job did not finish within 10 minutes"
+          exit 1
+
+      # Scale-to-zero means the first request pays a cold start, so allow
+      # generous time before calling it a failure.
+      - name: Wait for API readiness
+        run: |
+          url='${{ steps.stack.outputs.api-url }}/health/ready'
+          echo "Probing $url"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url" || echo 000)
+            echo "  attempt $i: HTTP $code"
+            [ "$code" = "200" ] && { echo "API ready."; exit 0; }
+            sleep 10
+          done
+          echo "::error::API did not become ready"
+          exit 1
+
+      - name: Download frontend build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.frontend-artifact }}
+          path: frontend-dist
+
+      # Fetched after the OIDC login and used immediately, so the deployment
+      # token is never stored as a repository secret.
+      - name: Deploy frontend
+        run: |
+          token=$(az staticwebapp secrets list \
+            --name '${{ steps.stack.outputs.swa-name }}' \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.apiKey -o tsv)
+          npx --yes @azure/static-web-apps-cli@2.0.6 deploy \
+            ./frontend-dist \
+            --deployment-token "$token" \
+            --env production
+        env:
+          # Belt and braces: keep the token out of any debug trace.
+          ACTIONS_STEP_DEBUG: "false"
+
+      - name: Smoke test
+        run: |
+          front='${{ steps.stack.outputs.frontend-url }}'
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$front" || echo 000)
+          echo "frontend $front -> HTTP $code"
+          [ "$code" = "200" ] || { echo "::error::frontend not serving"; exit 1; }
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Deployed — ${{ inputs.environment }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| API | ${{ steps.stack.outputs.api-url }} |"
+            echo "| Frontend | ${{ steps.stack.outputs.frontend-url }} |"
+            echo "| Image | \`${BALBOA_API_IMAGE}\` |"
+            echo ""
+            echo "To attach a custom domain, create at the DNS provider:"
+            echo '```'
+            echo "CNAME  api.<env>.balboa  ${{ steps.stack.outputs.cname-target }}"
+            echo "TXT    asuid.api.<env>.balboa  ${{ steps.stack.outputs.domain-verification-id }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

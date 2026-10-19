@@ -1,0 +1,181 @@
+# Trunk pipeline: every commit on main is built once and deployed to dev.
+#
+# Build once, deploy that exact digest. The artifact promoted to prod later is the
+# same digest this workflow verified in dev — prod never rebuilds (ADR-0012).
+#
+# Images go to ghcr.io, which is free for a public repository; ACR Basic would
+# cost about $5/month (ADR-0016). The push uses the built-in GITHUB_TOKEN, so
+# there is no registry credential to manage.
+
+name: Main
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+    inputs:
+      skip-deploy:
+        description: Build and push the image but do not deploy.
+        type: boolean
+        default: false
+
+permissions: {}
+
+# Deploys must not overlap: two runs racing to set the active revision would
+# leave the environment in whichever state finished last.
+concurrency:
+  group: main-deploy
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/balboa-api
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build and push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push to ghcr.io
+    outputs:
+      image: ${{ steps.digest.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: backend/**/packages.lock.json
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Re-run the gate on the merge result. A green PR plus a green main is not
+      # the same thing once other commits have landed.
+      - name: Test
+        run: |
+          dotnet restore backend/Balboa.slnx
+          make test-arch
+          make test-unit
+          make test-int
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # No Dockerfile: the SDK's container target produces a chiselled,
+      # non-root, ReadyToRun image and pushes it straight to the registry. One
+      # fewer file to keep in sync with the build.
+      - name: Publish container image
+        run: |
+          dotnet publish backend/src/Balboa.Host \
+            -c Release \
+            /t:PublishContainer \
+            -p ContainerRegistry=${{ env.REGISTRY }} \
+            -p ContainerRepository=${{ env.IMAGE_NAME }} \
+            -p ContainerImageTags='${{ github.sha }};latest' \
+            -p PublishReadyToRun=true \
+            -p ContainerBaseImage=mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
+
+      # Resolve the tag to an immutable digest. Tags move; digests do not, and a
+      # rollback must be able to name exactly what ran.
+      - name: Resolve image digest
+        id: digest
+        run: |
+          token=$(curl -s -u "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" \
+            "https://${{ env.REGISTRY }}/token?service=${{ env.REGISTRY }}&scope=repository:${{ env.IMAGE_NAME }}:pull" \
+            | jq -r .token)
+          digest=$(curl -sI \
+            -H "Authorization: Bearer $token" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            -H "Accept: application/vnd.oci.image.manifest.v1+json" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" \
+            "https://${{ env.REGISTRY }}/v2/${{ env.IMAGE_NAME }}/manifests/${{ github.sha }}" \
+            | tr -d '\r' | awk -F': ' '/[Dd]ocker-[Cc]ontent-[Dd]igest/ {print $2}')
+
+          if [ -z "$digest" ]; then
+            echo "::error::could not resolve image digest from the registry"
+            exit 1
+          fi
+
+          image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${digest}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved: $image"
+          echo "- Image: \`$image\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-dist
+          path: frontend/dist/*/browser
+          retention-days: 14
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  deploy-dev:
+    name: Deploy dev
+    needs: build
+    if: ${{ !inputs.skip-deploy }}
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: dev
+      image: ${{ needs.build.outputs.image }}
+      frontend-artifact: frontend-dist
+
+  # ---------------------------------------------------------------------------
+  # Post-deploy smoke tests. Deliberately NOT part of the PR gate: Playwright
+  # against a real environment is slow and occasionally flaky, and a flaky gate
+  # is worse than no gate.
+  smoke:
+    name: Smoke tests
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run Playwright smoke tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: ${{ needs.deploy-dev.outputs.frontend-url }}
+          E2E_API_URL: ${{ needs.deploy-dev.outputs.api-url }}
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore

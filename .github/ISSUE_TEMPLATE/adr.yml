@@ -1,0 +1,88 @@
+name: Architecture decision
+description: Propose, revisit or supersede an architectural decision.
+title: "[adr] "
+labels: ["adr", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ADRs are immutable once Accepted — a decision is superseded by a new ADR, never
+        rewritten (ADR-0001). Most ADRs carry a "revisit trigger"; if one has fired,
+        say which.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - New decision
+        - Revisit an existing ADR (its trigger has fired)
+        - Supersede an existing ADR
+    validations:
+      required: true
+
+  - type: input
+    id: existing
+    attributes:
+      label: Existing ADR
+      description: Which ADR this revisits or supersedes. Leave blank for a new decision.
+      placeholder: ADR-0011 (no VNet in phase 1)
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: >
+        What has changed, or what forces are in play now? For a revisit, state which
+        trigger fired and the evidence.
+    validations:
+      required: true
+
+  - type: textarea
+    id: drivers
+    attributes:
+      label: Decision drivers
+      description: What matters in choosing — cost, security, operability, speed, reversibility.
+      placeholder: |
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+      description: At least two, each with its real downside. An option with no downside is not understood yet.
+      placeholder: |
+        1. ... — pro / con
+        2. ... — pro / con
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed decision
+      description: Which option, and why that one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Consequences
+      description: Good and bad. Be honest about the bad; that is what the ADR is for.
+    validations:
+      required: true
+
+  - type: textarea
+    id: cost
+    attributes:
+      label: Cost impact
+      description: >
+        Any change to the monthly Azure bill. The current dev stack is about $0/month
+        and the budget alert is set at $10 — say if this moves either.
+    validations:
+      required: false

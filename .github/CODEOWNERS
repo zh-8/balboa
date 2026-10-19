@@ -1,0 +1,22 @@
+# Every path has an owner. With a single maintainer this is documentation more
+# than gatekeeping, but it is already correct for the day a second person joins,
+# and it makes GitHub request review automatically.
+
+*                           @zh-8
+
+# Architecture and decisions: changes here alter how everything else is built.
+/docs/adr/                  @zh-8
+/docs/architecture/         @zh-8
+/CLAUDE.md                  @zh-8
+
+# Boundary enforcement. Weakening any of these quietly undoes the modular
+# monolith, so they deserve a deliberate second look.
+/backend/Directory.Build.targets          @zh-8
+/backend/tests/Balboa.ArchitectureTests/  @zh-8
+/frontend/sheriff.config.ts               @zh-8
+
+# Infrastructure and the release path: cloud resources, identity and anything
+# that can cost money or break a deploy.
+/infra/                     @zh-8
+/.github/workflows/         @zh-8
+/.github/dependabot.yml     @zh-8
