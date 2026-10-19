@@ -5,7 +5,7 @@ import { ApiError } from '../../core/api/api-error';
 import { ErrorMessage } from '../../shared/ui/error-message';
 import { LoadingIndicator } from '../../shared/ui/loading-indicator';
 import { SampleApi } from './sample-api';
-import { WidgetCatalogItem } from './widget-catalog-item';
+import { Widget } from './widget';
 
 @Component({
   selector: 'app-widget-detail',
@@ -19,7 +19,8 @@ import { WidgetCatalogItem } from './widget-catalog-item';
       <app-error-message [message]="message" />
     } @else if (item(); as widget) {
       <h2>{{ widget.name }}</h2>
-      <p>{{ widget.description ?? 'No description.' }}</p>
+      <p>SKU: {{ widget.sku }}</p>
+      <p>{{ widget.isPublished ? 'Published' : 'Not published' }}</p>
     }
   `,
 })
@@ -29,7 +30,7 @@ export class WidgetDetail {
   /** Bound from the `:id` route parameter (withComponentInputBinding). */
   readonly id = input.required<string>();
 
-  readonly item = signal<WidgetCatalogItem | null>(null);
+  readonly item = signal<Widget | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 

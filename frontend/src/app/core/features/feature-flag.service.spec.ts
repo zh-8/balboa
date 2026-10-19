@@ -22,7 +22,7 @@ describe('FeatureFlagService', () => {
 
   afterEach(() => http.verify());
 
-  it('[AC-0001-04] reads flags from GET /api/features', () => {
+  it('reads flags from GET /api/features', () => {
     service.load().subscribe();
     http.expectOne('http://api.test/api/features').flush({ sample: true, beta: false });
 
@@ -32,14 +32,14 @@ describe('FeatureFlagService', () => {
     expect(service.loaded()).toBe(true);
   });
 
-  it('[AC-0001-04] treats unknown flags as disabled', () => {
+  it('treats unknown flags as disabled', () => {
     service.load().subscribe();
     http.expectOne('http://api.test/api/features').flush({ sample: true });
 
     expect(service.isEnabled('does-not-exist')).toBe(false);
   });
 
-  it('[AC-0001-04] fails closed when the API is unreachable', () => {
+  it('fails closed when the API is unreachable', () => {
     service.load().subscribe();
     http.expectOne('http://api.test/api/features').flush(null, { status: 503, statusText: 'Unavailable' });
 

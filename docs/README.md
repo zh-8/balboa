@@ -46,3 +46,5 @@ All runbooks describe the **planned** Azure setup, which does not exist yet.
 | [0016](adr/0016-ghcr-instead-of-acr.md) | ghcr.io instead of ACR |
 | [0017](adr/0017-bicep-layering-and-naming.md) | Bicep layering and naming |
 | [0018](adr/0018-defer-production-environment.md) | Defer the production environment |
+| [0019](adr/0019-local-development-docker-compose-aspire-deferred.md) | Local development uses docker compose, Aspire deferred |
+| [0020](adr/0020-spec-and-implementation-reconciliation.md) | Spec and implementation reconciliation |

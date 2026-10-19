@@ -127,11 +127,26 @@ jobs:
       - name: Integration tests
         run: make test-int
 
+      # `make coverage` already enforces the gate and fails the job below 85%.
+      # This re-runs the reporter purely to put the per-assembly numbers in the
+      # job summary, so a reviewer can see the margin without opening artifacts.
+      # --expect-from matters: an assembly that no test touches is never loaded
+      # and so is absent from the report entirely, which the gate counts as 0%
+      # rather than silently passing.
       - name: Coverage summary
         if: always()
         run: |
-          if [ -f coverage/report/SummaryGithub.md ]; then
-            cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          reports=$(find coverage -name '*.cobertura.xml' 2>/dev/null || true)
+          if [ -n "$reports" ]; then
+            {
+              echo "## Coverage (Domain + Application)"
+              echo '```'
+              node tools/coverage-gate/check.mjs --min 85 \
+                --expect-from backend/src $reports || true
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No coverage reports found." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload test results

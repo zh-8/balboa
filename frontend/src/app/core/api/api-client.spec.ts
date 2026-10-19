@@ -24,7 +24,7 @@ describe('ApiClient', () => {
 
   afterEach(() => http.verify());
 
-  it('[AC-0001-01] resolves paths against the configured base URL', () => {
+  it('resolves paths against the configured base URL', () => {
     let result: unknown;
     client.get('/api/sample/widgets').subscribe((r) => (result = r));
 
@@ -32,7 +32,7 @@ describe('ApiClient', () => {
     expect(result).toEqual([{ id: '1' }]);
   });
 
-  it('[AC-0001-05] sends a correlation id header on API calls', () => {
+  it('sends a correlation id header on API calls', () => {
     client.get('api/features').subscribe();
 
     const req = http.expectOne('http://api.test/api/features');
@@ -40,7 +40,7 @@ describe('ApiClient', () => {
     req.flush({});
   });
 
-  it('[AC-0001-03] maps a 404 to an ApiError with isNotFound', () => {
+  it('maps a 404 to an ApiError with isNotFound', () => {
     let error: unknown;
     client.get('api/sample/widgets/missing').subscribe({ error: (e) => (error = e) });
 
@@ -53,7 +53,7 @@ describe('ApiClient', () => {
     expect((error as ApiError).message).toBe('Not Found');
   });
 
-  it('[AC-0001-05] maps server failures to an ApiError carrying the status', () => {
+  it('maps server failures to an ApiError carrying the status', () => {
     let error: unknown;
     client.post('api/sample/widgets', {}).subscribe({ error: (e) => (error = e) });
 

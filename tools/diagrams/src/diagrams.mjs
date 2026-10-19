@@ -42,7 +42,7 @@ const title = (d, t, sub) => { d.text(0, -50, t, { size: 24 }); if (sub) d.text(
   d.box('job', 880, 440, 300, 100, 'caj-balboa-migrate-dev-itn\nContainer Apps job\nBalboa.Host migrate (DDL)', { color: 'yellow' });
   d.box('kv', 880, 40, 300, 90, 'kv-balboa-dev-xxxx\nKey Vault (RBAC mode)', { color: 'purple' });
   d.box('ai', 380, 440, 280, 100, 'appi-balboa-dev-itn\nApp Insights + Log Analytics\n(OpenTelemetry export)', { color: 'grey' });
-  d.box('aspire', 0, 440, 200, 100, 'Aspire AppHost\nlocal dev only,\nnever deployed', { color: 'grey', dashed: true });
+  d.box('localdb', 0, 440, 200, 100, 'docker compose\nlocal dev only:\nPostgres 17 (ADR-0019)', { color: 'grey', dashed: true });
   d.arrow(['browser', 't', 0], ['swa', 'l', 0], { label: '1  load SPA', lx: 105, ly: 100 });
   d.arrow(['browser', 'r', 0], ['api', 'l', 0], { label: '2  fetch + CORS\n(origin = SPA)', lx: 275, ly: 285, color: 'blue' });
   d.arrow(['api', 'r', 0], ['pg', 'l', 0], { label: '3  SQL, Entra token\nas password', color: 'green' });

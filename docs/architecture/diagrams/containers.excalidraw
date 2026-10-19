@@ -614,7 +614,7 @@
       "lineHeight": 1.25
     },
     {
-      "id": "aspire",
+      "id": "localdb",
       "type": "rectangle",
       "x": 0,
       "y": 440,
@@ -650,9 +650,9 @@
     {
       "id": "containers-18",
       "type": "text",
-      "x": 32.5,
+      "x": 1,
       "y": 460,
-      "width": 135,
+      "width": 198,
       "height": 60,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -673,13 +673,13 @@
       "updated": 1760832000000,
       "link": null,
       "locked": false,
-      "text": "Aspire AppHost\nlocal dev only,\nnever deployed",
+      "text": "docker compose\nlocal dev only:\nPostgres 17 (ADR-0019)",
       "fontSize": 16,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "aspire",
-      "originalText": "Aspire AppHost\nlocal dev only,\nnever deployed",
+      "containerId": "localdb",
+      "originalText": "docker compose\nlocal dev only:\nPostgres 17 (ADR-0019)",
       "autoResize": true,
       "lineHeight": 1.25
     },

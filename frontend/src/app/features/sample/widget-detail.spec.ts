@@ -22,15 +22,18 @@ async function setup(id: string) {
 }
 
 describe('WidgetDetail', () => {
-  it('[AC-0001-02] loads the item identified by the route id', async () => {
+  it('[AC-0001-06] loads the widget identified by the route id', async () => {
     const http = await setup('a');
-    http.expectOne('http://api.test/api/sample/widgets/a').flush({ id: 'a', name: 'Alpha', description: 'first' });
+    http
+      .expectOne('http://api.test/api/sample/widgets/a')
+      .flush({ id: 'a', sku: 'WGT-A', name: 'Alpha', isPublished: true });
 
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeTruthy();
-    expect(screen.getByText('first')).toBeTruthy();
+    expect(screen.getByText('SKU: WGT-A')).toBeTruthy();
+    expect(screen.getByText('Published')).toBeTruthy();
   });
 
-  it('[AC-0001-03] shows not found when the item does not exist', async () => {
+  it('[AC-0001-06] shows not found when the item does not exist', async () => {
     const http = await setup('nope');
     http
       .expectOne('http://api.test/api/sample/widgets/nope')
@@ -39,7 +42,7 @@ describe('WidgetDetail', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('Widget not found.');
   });
 
-  it('[AC-0001-05] shows a generic error on server failure', async () => {
+  it('shows a generic error on server failure', async () => {
     const http = await setup('a');
     http.expectOne('http://api.test/api/sample/widgets/a').flush(null, { status: 500, statusText: 'Server Error' });
 

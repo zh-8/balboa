@@ -2,17 +2,17 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClient } from '../../core/api/api-client';
-import { WidgetCatalogItem } from './widget-catalog-item';
+import { Widget } from './widget';
 
 @Injectable({ providedIn: 'root' })
 export class SampleApi {
   private readonly api = inject(ApiClient);
 
-  list(): Observable<WidgetCatalogItem[]> {
-    return this.api.get<WidgetCatalogItem[]>('api/sample/widgets');
+  list(): Observable<Widget[]> {
+    return this.api.get<Widget[]>('api/sample/widgets');
   }
 
-  get(id: string): Observable<WidgetCatalogItem> {
-    return this.api.get<WidgetCatalogItem>(`api/sample/widgets/${encodeURIComponent(id)}`);
+  get(id: string): Observable<Widget> {
+    return this.api.get<Widget>(`api/sample/widgets/${encodeURIComponent(id)}`);
   }
 }

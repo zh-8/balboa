@@ -74,14 +74,23 @@ test-int: ## Integration + API tests against real Postgres (requires Docker)
 test-fe: ## Frontend unit tests (Vitest)
 	cd $(FRONTEND) && npm run test -- --run
 
-coverage: ## Backend coverage report, enforces the Domain/Application gate
-	dotnet test $(SLN) -c Release --filter "Category!=Integration" \
-		--collect "XPlat Code Coverage" --results-directory coverage
-	dotnet tool run reportgenerator -- \
-		-reports:"coverage/**/coverage.cobertura.xml" \
-		-targetdir:coverage/report \
-		-reporttypes:"Html;TextSummary;MarkdownSummaryGithub"
-	@cat coverage/report/Summary.txt
+# Coverage uses Microsoft.Testing.Extensions.CodeCoverage (the native MTP path), referenced
+# only by the unit-test projects. It is passed per project: the other test assemblies do not
+# know --coverage and would reject it. Paths must be absolute or the extension crashes.
+# backend/codecoverage.settings.xml limits instrumentation to *.Domain and *.Application, and
+# tools/coverage-gate/check.mjs fails the target when either is below 85% (ADR-0014), or when
+# a Domain/Application project is missing from the reports because no test touched it.
+COVERAGE_MIN ?= 85
+
+coverage: ## Backend coverage; fails if Domain or Application is below the 85% line gate
+	rm -rf coverage
+	for p in $$(find $(BACKEND)/tests -name '*.UnitTests.csproj'); do \
+		dotnet test --project $$p -c Release \
+			--coverage --coverage-output-format cobertura \
+			--coverage-settings $(CURDIR)/$(BACKEND)/codecoverage.settings.xml \
+			--results-directory $(CURDIR)/coverage || exit 1; \
+	done
+	node tools/coverage-gate/check.mjs --min $(COVERAGE_MIN) --expect-from $(BACKEND)/src $$(find coverage -name '*.cobertura.xml')
 
 # ---------------------------------------------------------------------------
 # Lint / format

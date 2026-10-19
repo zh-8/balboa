@@ -30,7 +30,8 @@ _System context: Balboa, its users, GitHub, Azure and the DNS provider._
 
 ![Containers](diagrams/containers.svg)
 
-_Containers: Static Web App, API container, migrator job, Postgres, and local-only Aspire._
+_Containers: Static Web App, API container, migrator job, Postgres, and the local-only
+docker compose database._
 
 ## 3. Modules
 
@@ -46,8 +47,9 @@ A module is a bounded context made of four projects under
 
 Shared projects: `Balboa.SharedKernel` (Entity, AggregateRoot, ValueObject, IDomainEvent,
 Result), `Balboa.BuildingBlocks` (handler abstractions, outbox and inbox, EF conventions),
-`Balboa.ServiceDefaults` (OpenTelemetry, health, resilience). `Balboa.AppHost` is Aspire
-orchestration for local development only and is never deployed.
+`Balboa.ServiceDefaults` (OpenTelemetry, health, resilience). Local development runs the
+Host against a Postgres container started by `backend/docker-compose.yml`; Aspire was
+deferred because its restore would not complete on this network (ADR-0019).
 
 ![Module map](diagrams/module-map.svg)
 
@@ -170,7 +172,7 @@ Azure DNS zone is needed.
 
 | Environment | State | Notes |
 |---|---|---|
-| local | Available | `make run` starts the whole stack via Aspire; Postgres in a container |
+| local | Available | `make run` starts the API against a Postgres container (ADR-0019) |
 | dev | Planned, blocked | Resource group `rg-balboa-dev-itn`; budget $10/month |
 | shared | Planned, blocked | `rg-balboa-shared-itn` for cross-environment resources |
 | prod | **Deferred** | Not created until the first real feature ([ADR-0018](../adr/0018-defer-production-environment.md)) |

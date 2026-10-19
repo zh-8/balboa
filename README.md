@@ -16,7 +16,7 @@ Requires .NET 10 SDK, Node 24 and Docker.
 make setup    # restore backend, frontend and tooling
 make test     # unit + architecture + frontend tests (no Docker needed)
 make test-int # integration tests against a real Postgres container
-make run      # whole stack locally via Aspire
+make run      # API + Postgres container locally via docker compose
 ```
 
 `make help` lists every target. CI calls the same targets, so local and CI cannot drift.

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ErrorMessage } from '../../shared/ui/error-message';
 import { LoadingIndicator } from '../../shared/ui/loading-indicator';
 import { SampleApi } from './sample-api';
-import { WidgetCatalogItem } from './widget-catalog-item';
+import { Widget } from './widget';
 
 @Component({
   selector: 'app-widget-list',
@@ -23,6 +23,12 @@ import { WidgetCatalogItem } from './widget-catalog-item';
         @for (item of items(); track item.id) {
           <li>
             <a [routerLink]="[item.id]">{{ item.name }}</a>
+            <small
+              >{{ item.sku }}
+              @if (item.isPublished) {
+                (published)
+              }
+            </small>
           </li>
         }
       </ul>
@@ -32,7 +38,7 @@ import { WidgetCatalogItem } from './widget-catalog-item';
 export class WidgetList implements OnInit {
   private readonly api = inject(SampleApi);
 
-  readonly items = signal<WidgetCatalogItem[]>([]);
+  readonly items = signal<Widget[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 

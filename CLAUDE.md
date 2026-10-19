@@ -28,7 +28,7 @@ Run `make help` for the full list.
 | `make test-int` | Integration + API tests against real Postgres. **Needs Docker** |
 | `make coverage` | Coverage report and gate |
 | `make lint` / `make fmt` | Lint / format. `make fmt-check` is the CI variant |
-| `make run` | Whole stack locally via Aspire |
+| `make run` | API + Postgres container via docker compose (ADR-0019) |
 | `make spec-check` | Verify every acceptance criterion has a tagged test |
 | `make diagrams` / `make diagrams-check` | Export / verify Excalidraw SVGs |
 | `make infra-lint` | Build and lint Bicep. No Azure login required |
@@ -42,7 +42,6 @@ Never invent a new script when a target exists. If you need a new capability, ad
 backend/          .NET 10 modular monolith
   src/
     Balboa.Host/            composition root, minimal APIs, health, `migrate` command
-    Balboa.AppHost/         Aspire orchestration, LOCAL DEV ONLY (never deployed)
     Balboa.ServiceDefaults/ OpenTelemetry, health checks, resilience
     Balboa.SharedKernel/    Entity, AggregateRoot, ValueObject, IDomainEvent, Result
     Balboa.BuildingBlocks/  handler abstractions, outbox/inbox, EF conventions
