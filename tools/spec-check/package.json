@@ -12,6 +12,6 @@
     "lint:docs": "cd ../.. && tools/spec-check/node_modules/.bin/markdownlint-cli2 --config .markdownlint-cli2.jsonc"
   },
   "devDependencies": {
-    "markdownlint-cli2": "0.18.1"
+    "markdownlint-cli2": "0.24.0"
   }
 }

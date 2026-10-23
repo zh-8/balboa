@@ -113,11 +113,21 @@ module shared 'modules/shared.bicep' = {
 // RBAC Administrator lets it create the role assignments that main.bicep needs
 // (app identity -> Key Vault, -> App Insights), but an ABAC condition pins it to
 // exactly those two roles so it cannot grant anything else — including to itself.
+//
+// `what-if-short-circuiting` is suppressed on the two principalId lines below, and
+// nowhere else. A role assignment's name must be a deterministic guid() derived from
+// the principal, and the principal only exists once the managed identity in
+// modules/shared.bicep has been created — so the value cannot be anything but a
+// runtime reference. The consequence is that `what-if` reports these two role
+// assignments as unknown rather than predicting them; bootstrap.sh prints the full
+// what-if and requires the operator to type `yes`, so the loss of precision is
+// visible and bounded to RBAC the operator is already being asked to approve.
 // ---------------------------------------------------------------------------
 
 module envRbac 'modules/rbac.bicep' = {
   scope: envRg
   params: {
+    #disable-next-line what-if-short-circuiting
     principalId: shared.outputs.githubIdentityPrincipalId
     contributorRoleId: roles.contributor
     rbacAdministratorRoleId: roles.rbacAdministrator
@@ -133,6 +143,7 @@ module envRbac 'modules/rbac.bicep' = {
 module sharedRbac 'modules/rbac-reader.bicep' = {
   scope: sharedRg
   params: {
+    #disable-next-line what-if-short-circuiting
     principalId: shared.outputs.githubIdentityPrincipalId
   }
 }

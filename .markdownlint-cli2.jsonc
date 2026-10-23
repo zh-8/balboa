@@ -34,7 +34,14 @@
 
     // Emphasis used as a heading — the templates use bold labels like
     // **Why:** inside list items, which is intentional.
-    "MD036": false
+    "MD036": false,
+
+    // Table pipe padding, added in markdownlint v0.42 (markdownlint-cli2 0.24).
+    // It wants `| --- | --- |` and flags the compact `|---|---|` separator used
+    // throughout this repo — 110 findings, every one cosmetic and none of them a
+    // rendering difference, since both are valid GFM. Reformatting every table to
+    // satisfy pipe spacing buys nothing, so the rule is off rather than bulk-fixed.
+    "MD060": false
   },
   "globs": ["**/*.md"],
   "ignores": [

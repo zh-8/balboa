@@ -152,6 +152,11 @@ joins. Modules reference each other by ID only.
 - Coverage gate: **≥85% line coverage on `*.Domain` and `*.Application`**. Infrastructure and
   Host are excluded — integration tests cover those.
 - Playwright is for a handful of post-deploy smoke tests only, never in the PR gate.
+- `frontend/package.json` pins `overrides.vite` deliberately. `@angular/build` depends on an
+  exact vite version that carries `launch-editor` advisories, and npm's suggested remedy is to
+  *downgrade* Angular. The override moves vite forward within the same minor instead. Do not
+  remove it without re-running `npm audit`; `make lint-fe`, `make test-fe` and both build
+  configurations were verified against it.
 
 ## 7. Docs and diagrams
 

@@ -62,6 +62,9 @@ jobs:
               - 'docs/**'
               - '**/*.md'
               - 'tools/**'
+              # The lint config itself: a change here alters what passes, and none of
+              # the globs above match a dotfile at the repo root.
+              - '.markdownlint-cli2.jsonc'
 
   # ---------------------------------------------------------------------------
   pr-title:
@@ -243,13 +246,20 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: tools/spec-check/package-lock.json
+
+      # `make lint-docs` rather than markdownlint-cli2-action: the action pins its own
+      # linter version, so it and a developer's local run could disagree about what
+      # passes — the drift the Makefile contract exists to prevent. Going through the
+      # target uses the version in tools/spec-check/package-lock.json for both, and
+      # drops a third-party action from the supply chain.
+      - name: Install docs tooling
+        working-directory: tools/spec-check
+        run: npm ci
 
       - name: Markdown lint
-        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
-        with:
-          globs: |
-            **/*.md
-            !**/node_modules/**
+        run: make lint-docs
 
       # Spec-to-test traceability: every acceptance criterion needs a tagged
       # test, and every tag must name a criterion that exists.

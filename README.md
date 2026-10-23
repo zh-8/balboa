@@ -21,6 +21,11 @@ make run      # API + Postgres container locally via docker compose
 
 `make help` lists every target. CI calls the same targets, so local and CI cannot drift.
 
+The local Postgres binds **127.0.0.1:55432**, not 5432 — most machines already have something on
+the default port, and `make db` refuses to start rather than let Balboa's migrations run against
+a database that is not ours. Override with `make db BALBOA_PG_PORT=<port>`, and set
+`ConnectionStrings__balboa` to match.
+
 ## Architecture at a glance
 
 One deployable unit, strictly separated modules. Each module is a bounded context with its

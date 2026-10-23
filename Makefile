@@ -130,7 +130,28 @@ run: db ## Run the API locally against a Postgres container
 run-fe: ## Run the Angular dev server (expects `make run` in another terminal)
 	cd $(FRONTEND) && npm start
 
+# Balboa's local Postgres is on 55432, NOT the default 5432 — a developer machine usually
+# already has something on 5432, and the dev connection string is only "localhost:<port>",
+# so a collision would quietly aim Balboa's migrations at an unrelated database rather than
+# fail. Keep this in step with backend/docker-compose.yml and appsettings.Development.json.
+BALBOA_PG_PORT ?= 55432
+export BALBOA_PG_PORT
+
 db: ## Start the local Postgres container and wait for it to be healthy
+	@# Refuse to continue if a stranger holds the port: `migrate` would target their database.
+	@# Our own container holding it is fine, because `up -d --wait` is idempotent — so compare
+	@# the listener against the port our container actually publishes, not merely whether a
+	@# container exists (it may be running on a different port than the one asked for).
+	@if (exec 3<>/dev/tcp/127.0.0.1/$(BALBOA_PG_PORT)) 2>/dev/null; then \
+		mine=$$(docker compose -f $(BACKEND)/docker-compose.yml port postgres 5432 2>/dev/null \
+			| sed 's/.*://' || true); \
+		if [ "$$mine" != "$(BALBOA_PG_PORT)" ]; then \
+			echo "Port $(BALBOA_PG_PORT) is already in use, and not by Balboa's container."; \
+			echo "Stop whatever holds it, or run:  make db BALBOA_PG_PORT=<free-port>"; \
+			echo "and point the Host at the same port with ConnectionStrings__balboa."; \
+			exit 1; \
+		fi; \
+	fi
 	docker compose -f $(BACKEND)/docker-compose.yml up -d --wait
 
 db-stop: ## Stop the local Postgres container
@@ -174,4 +195,9 @@ ci: fmt-check lint test diagrams-check spec-check infra-lint ## Everything CI ru
 clean: ## Remove build output
 	dotnet clean $(SLN) || true
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/.angular coverage artifacts
-	find . -type d -name bin -o -type d -name obj | xargs -r rm -rf
+	@# MUST prune node_modules and .git: plenty of npm packages ship their entry points in a
+	@# bin/ directory, so an unpruned sweep uninstalls the frontend toolchain (eslint, prettier,
+	@# ng) and leaves a working tree that only `npm ci` can repair. -print0/-0 for paths with
+	@# spaces; the parenthesised -o group keeps the prune applying to both names.
+	find . -type d \( -name node_modules -o -name .git \) -prune -o \
+	       -type d \( -name bin -o -name obj \) -print0 | xargs -0 -r rm -rf

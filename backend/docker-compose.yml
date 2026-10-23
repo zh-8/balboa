@@ -13,8 +13,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      # Override with BALBOA_PG_PORT if 5432 is taken; then also set ConnectionStrings__balboa for the Host.
-      - "127.0.0.1:${BALBOA_PG_PORT:-5432}:5432"
+      # Deliberately NOT 5432. A developer machine usually already has something on the default
+      # Postgres port, and the Host's dev connection string is just "localhost:<port>" — so a
+      # collision does not fail loudly, it points Balboa's migrations at a stranger's database.
+      # 55432 is Balboa's own port; keep it in step with appsettings.Development.json.
+      # Override with BALBOA_PG_PORT, and then also set ConnectionStrings__balboa for the Host.
+      - "127.0.0.1:${BALBOA_PG_PORT:-55432}:5432"
     volumes:
       - balboa-pgdata:/var/lib/postgresql/data
     healthcheck:
