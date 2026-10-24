@@ -138,10 +138,16 @@ jobs:
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
+  # Gated on AZURE_BOOTSTRAPPED, a repository variable that bootstrap.sh sets as its
+  # last action. Azure does not exist yet, so without this gate the very first merge
+  # to main would fail at the OIDC login and every merge after it would stay red —
+  # which contradicts "main is always releasable" and teaches everyone to ignore a
+  # red pipeline. Until bootstrap has run, the image is still built and pushed, and
+  # only the deploy is skipped. `smoke` needs this job, so it skips with it.
   deploy-dev:
     name: Deploy dev
     needs: build
-    if: ${{ !inputs.skip-deploy }}
+    if: ${{ !inputs.skip-deploy && vars.AZURE_BOOTSTRAPPED == 'true' }}
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: dev

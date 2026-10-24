@@ -94,6 +94,27 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
    authenticates anything on its own. They are still not committed, because a public
    repository is permanent in a way an environment variable is not.
 
+   `bootstrap.sh` then sets one more, at **repository** scope rather than environment
+   scope:
+
+   ```bash
+   gh variable set AZURE_BOOTSTRAPPED --repo zh-8/balboa --body true
+   ```
+
+   This is the switch that turns deployment on. `main.yml` decides whether to deploy
+   before it knows which environment it is deploying to, so it cannot read an
+   environment-scoped variable at that point. While it is unset, every merge to `main`
+   still builds and pushes the container image and skips only the deploy, which is what
+   keeps `main` green before Azure exists. It is set last on purpose: a bootstrap that
+   aborts half way must not leave the repository claiming the environment is ready.
+
+   To turn deployment back off — during an incident, or while rebuilding the
+   environment — set it to anything other than `true`:
+
+   ```bash
+   gh variable set AZURE_BOOTSTRAPPED --repo zh-8/balboa --body false
+   ```
+
 7. Set the Postgres Entra administrator and create the database roles for the app and
    migrator identities once the server exists (first CI infrastructure run). Open question:
    the exact mechanism (a script run by the migrator identity versus a one-off step run
