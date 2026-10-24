@@ -23,9 +23,13 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
 
 1. Sign in and select the subscription. Confirm the state is `Enabled`, not `Warned`.
 
+   The ids live in `infra/bootstrap/.env` (gitignored), not in this public repo. Copy
+   `infra/bootstrap/.env.example` and fill it in once; `bootstrap.sh` sources it.
+
    ```bash
-   az login --tenant b9661c85-8954-4af0-b848-2c66dc0c8b9a
-   az account set --subscription dafd0bbc-6b8e-4074-a4d4-15ee20d0a075
+   set -a && source infra/bootstrap/.env && set +a
+   az login --tenant "$BALBOA_TENANT_ID"
+   az account set --subscription "$BALBOA_SUBSCRIPTION_ID"
    az account show --query "{name:name, state:state, id:id}" -o table
    ```
 
@@ -75,11 +79,15 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
 
    ```bash
    gh variable set AZURE_TENANT_ID       --env dev --repo zh-8/balboa \
-     --body b9661c85-8954-4af0-b848-2c66dc0c8b9a
+     --body "$BALBOA_TENANT_ID"
    gh variable set AZURE_SUBSCRIPTION_ID --env dev --repo zh-8/balboa \
-     --body dafd0bbc-6b8e-4074-a4d4-15ee20d0a075
+     --body "$BALBOA_SUBSCRIPTION_ID"
    gh variable set AZURE_CLIENT_ID       --env dev --repo zh-8/balboa --body <client-id>
    ```
+
+   These are GitHub *variables*, not secrets, and that is deliberate: none of the three
+   authenticates anything on its own. They are still not committed, because a public
+   repository is permanent in a way an environment variable is not.
 
 7. Set the Postgres Entra administrator and create the database roles for the app and
    migrator identities once the server exists (first CI infrastructure run). Open question:

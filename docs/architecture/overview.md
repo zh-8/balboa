@@ -196,8 +196,8 @@ subscription and must never be named, scoped or touched by Balboa tooling.
 | A | Local: solution skeleton, Sample module, tests, tooling, docs, CI definitions | **In progress** |
 | B | Azure: bootstrap, dev environment, first deploy | **Blocked** on a subscription upgrade |
 
-The Azure subscription (tenant `b9661c85-8954-4af0-b848-2c66dc0c8b9a`, subscription
-`dafd0bbc-6b8e-4074-a4d4-15ee20d0a075`) is in the `Warned` state: the free trial's $200
+The Azure subscription (its id and tenant id are kept out of this public repository — see
+`infra/bootstrap/.env.example`) is in the `Warned` state: the free trial's $200
 credit expired around 2026-10-15, the balance is $0 and the spending limit is on. A Warned
 subscription can read and delete resources but cannot create them. Phase B needs an upgrade
 to pay-as-you-go, which is a billing change the owner must make; tooling must not attempt

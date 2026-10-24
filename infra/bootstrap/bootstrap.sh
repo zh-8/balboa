@@ -18,18 +18,37 @@
 
 set -euo pipefail
 
+readonly ENV="${1:-dev}"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly TEMPLATE="${SCRIPT_DIR}/bootstrap.bicep"
+
 # ---- expected context -------------------------------------------------------
-readonly EXPECTED_SUBSCRIPTION="dafd0bbc-6b8e-4074-a4d4-15ee20d0a075"
-readonly EXPECTED_TENANT="b9661c85-8954-4af0-b848-2c66dc0c8b9a"
+# The subscription id, tenant id and alert email are NOT hardcoded, because this
+# repository is public. None of the three is a credential, but a tenant id is a
+# durable identifier of an Entra directory that can be used to enumerate its login
+# and federation configuration, and a public repo is effectively permanent: forks
+# and search indexes outlive a deletion. So they are supplied from outside the repo.
+#
+# The assertion further down is a genuine safety control -- it is what keeps this
+# script off the wrong subscription, and so away from rg-cairobits. It is unchanged;
+# it just reads what to expect from the environment rather than from a tracked file.
+#
+# Set them per shell, or put them in infra/bootstrap/.env (gitignored). See
+# infra/bootstrap/.env.example and docs/runbooks/bootstrap.md.
+if [[ -f "${SCRIPT_DIR}/.env" ]]; then
+  # shellcheck disable=SC1091  # operator-supplied, intentionally untracked
+  source "${SCRIPT_DIR}/.env"
+fi
+
+readonly EXPECTED_SUBSCRIPTION="${BALBOA_SUBSCRIPTION_ID:?not set — see infra/bootstrap/.env.example}"
+readonly EXPECTED_TENANT="${BALBOA_TENANT_ID:?not set — see infra/bootstrap/.env.example}"
+readonly ALERT_EMAIL="${BALBOA_ALERT_EMAIL:?not set — see infra/bootstrap/.env.example}"
+
+# Public by nature: the repo these federated credentials are scoped to, and the region.
 readonly GITHUB_OWNER="zh-8"
 readonly GITHUB_REPO="balboa"
 readonly LOCATION="italynorth"
 readonly BUDGET_AMOUNT=10
-readonly ALERT_EMAIL="heshamelwardany08@gmail.com"
-
-readonly ENV="${1:-dev}"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly TEMPLATE="${SCRIPT_DIR}/bootstrap.bicep"
 
 readonly REQUIRED_PROVIDERS=(
   Microsoft.App
