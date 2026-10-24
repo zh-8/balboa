@@ -104,8 +104,16 @@ lint-be: ## Backend: analyzers as errors (build is the linter)
 lint-fe: ## Frontend: ESLint + Sheriff module boundaries
 	cd $(FRONTEND) && npm run lint && npm run lint:boundaries
 
-lint-docs: ## Markdown lint + link check
+lint-docs: ## Markdown lint, plus the link check when lychee is installed
 	cd tools/spec-check && npm run lint:docs
+	@# The link check ran only in CI, which is how a lychee.toml that could not even be
+	@# parsed survived: the docs job had never passed. lychee is a single binary and not an
+	@# npm dependency, so it is used when present rather than required.
+	@if command -v lychee >/dev/null 2>&1; then \
+		lychee --config lychee.toml --no-progress './**/*.md'; \
+	else \
+		echo "note: lychee not installed, so the link check was skipped here; CI always runs it."; \
+	fi
 
 fmt: ## Format backend and frontend in place
 	dotnet format $(SLN)
