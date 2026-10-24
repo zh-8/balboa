@@ -16,7 +16,12 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
 - Subscription upgraded from `Warned` to pay-as-you-go (owner action in the portal).
 - Azure CLI signed in as a user with Owner (or Contributor plus User Access Administrator)
   on the subscription.
-- Public GitHub repository `zh-8/balboa` exists, with an environment named `dev`.
+- Public GitHub repository `zh-8/balboa` exists, with an environment named `dev`. **Done**
+  — the environment name must stay exactly `dev`, because the federated credential subject
+  is pinned to it (see step 5).
+- `infra/bootstrap/.env` exists locally, holding `BALBOA_SUBSCRIPTION_ID`,
+  `BALBOA_TENANT_ID` and `BALBOA_ALERT_EMAIL`. Copy `.env.example`; it is gitignored and
+  must stay that way.
 - `infra/bootstrap/` exists in the repository.
 
 ## Steps
