@@ -19,7 +19,11 @@
 set -euo pipefail
 
 readonly ENV="${1:-dev}"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Assigned before being made readonly: `readonly X="$(cmd)"` masks the command's exit
+# status, so a failure of the cd would pass silently under `set -e` (SC2155).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 readonly TEMPLATE="${SCRIPT_DIR}/bootstrap.bicep"
 
 # ---- expected context -------------------------------------------------------
