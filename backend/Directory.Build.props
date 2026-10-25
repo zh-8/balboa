@@ -14,7 +14,19 @@
          but not the transitive graph; packages.lock.json pins that too, so a restore today
          resolves what it resolved last month. CI restores in locked mode, which turns a
          stale lock file into a build failure instead of a silent upgrade. Change a package
-         version and `make setup` rewrites the affected lock files; commit them with it. -->
+         version and `make setup` rewrites the affected lock files; commit them with it.
+
+         One trap. A container publish sets PublishReadyToRun, which makes the restore
+         runtime specific and appends a `net10.0/linux-x64` target to Balboa.Host's lock
+         file. Do NOT commit that: a plain locked restore then fails every later PR with
+         NU1004, "the project's runtime identifiers have changed". Discard the change
+         instead. The pipeline is unaffected because it does not restore in locked mode
+         before publishing, so only a local publish leaves the file dirty.
+
+         Also: an XML comment may not contain two hyphens in a row, so no switch names
+         are spelled out above. MSBuild does not report a malformed file; it silently
+         evaluates every property here to empty, which surfaces much later as
+         NETSDK1013, "the TargetFramework value '' was not recognized". -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
