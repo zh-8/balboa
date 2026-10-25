@@ -193,8 +193,20 @@ subscription and must never be named, scoped or touched by Balboa tooling.
 
 | Phase | Scope | State |
 |---|---|---|
-| A | Local: solution skeleton, Sample module, tests, tooling, docs, CI definitions | **In progress** |
+| A | Local: solution skeleton, Sample module, tests, tooling, docs, CI definitions | **Complete** |
+| A10 | Public repository, branch ruleset, security settings, `dev` environment | **Complete** |
 | B | Azure: bootstrap, dev environment, first deploy | **Blocked** on a subscription upgrade |
+
+`zh-8/balboa` is live. `main` carries a `main-protection` ruleset: pull request required
+(0 approvals, review threads must resolve, squash-only), `ci-ok` as the one required status
+check with strict up-to-date enforcement, linear history, and no deletion or force-push.
+Repository admins may bypass, but only through a pull request. Secret scanning and push
+protection, Dependabot alerts and security updates, and private vulnerability reporting are
+all on. The `dev` environment only accepts deployments from the protected default branch.
+
+There is deliberately **no `prod` environment yet**: the deploy workflow takes the
+environment name as an input, so an attempted prod deploy fails closed rather than
+provisioning something nobody has reviewed.
 
 The Azure subscription (its id and tenant id are kept out of this public repository — see
 `infra/bootstrap/.env.example`) is in the `Warned` state: the free trial's $200

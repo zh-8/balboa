@@ -10,7 +10,12 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <Deterministic>true</Deterministic>
-    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <!-- Lock files are committed. Central Package Management pins the versions we declare,
+         but not the transitive graph; packages.lock.json pins that too, so a restore today
+         resolves what it resolved last month. CI restores in locked mode, which turns a
+         stale lock file into a build failure instead of a silent upgrade. Change a package
+         version and `make setup` rewrites the affected lock files; commit them with it. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
   </PropertyGroup>

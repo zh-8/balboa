@@ -19,7 +19,11 @@
 set -euo pipefail
 
 readonly ENV="${1:-dev}"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Assigned before being made readonly: `readonly X="$(cmd)"` masks the command's exit
+# status, so a failure of the cd would pass silently under `set -e` (SC2155).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 readonly TEMPLATE="${SCRIPT_DIR}/bootstrap.bicep"
 
 # ---- expected context -------------------------------------------------------
@@ -198,6 +202,15 @@ set_var AZURE_RESOURCE_GROUP "$env_rg"
 set_var BALBOA_LOG_ANALYTICS_ID "$log_id"
 set_var BALBOA_ADMIN_OBJECT_ID "$admin_object_id"
 set_var BALBOA_ADMIN_PRINCIPAL_NAME "$admin_principal_name"
+
+# Repository-level, unlike everything above: main.yml decides whether to deploy at
+# all before it knows which environment it is deploying to, and an environment-scoped
+# variable is not readable at that point. Until this is 'true', main.yml builds and
+# pushes the image and skips the deploy, so merges to main stay green while Azure
+# does not exist yet. Set last, so a bootstrap that aborts part way does not claim
+# the environment is ready.
+gh variable set AZURE_BOOTSTRAPPED --repo "${GITHUB_OWNER}/${GITHUB_REPO}" --body "true"
+printf '  %-28s = %s (repository scope)\n' AZURE_BOOTSTRAPPED true
 
 # Branch protection, kept as JSON so it is reviewable and re-appliable.
 ruleset_file="${SCRIPT_DIR}/github/rulesets/main.json"

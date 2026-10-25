@@ -16,7 +16,12 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
 - Subscription upgraded from `Warned` to pay-as-you-go (owner action in the portal).
 - Azure CLI signed in as a user with Owner (or Contributor plus User Access Administrator)
   on the subscription.
-- Public GitHub repository `zh-8/balboa` exists, with an environment named `dev`.
+- Public GitHub repository `zh-8/balboa` exists, with an environment named `dev`. **Done**
+  — the environment name must stay exactly `dev`, because the federated credential subject
+  is pinned to it (see step 5).
+- `infra/bootstrap/.env` exists locally, holding `BALBOA_SUBSCRIPTION_ID`,
+  `BALBOA_TENANT_ID` and `BALBOA_ALERT_EMAIL`. Copy `.env.example`; it is gitignored and
+  must stay that way.
 - `infra/bootstrap/` exists in the repository.
 
 ## Steps
@@ -88,6 +93,27 @@ Related: [ADR-0009](../adr/0009-github-oidc-user-assigned-managed-identities.md)
    These are GitHub *variables*, not secrets, and that is deliberate: none of the three
    authenticates anything on its own. They are still not committed, because a public
    repository is permanent in a way an environment variable is not.
+
+   `bootstrap.sh` then sets one more, at **repository** scope rather than environment
+   scope:
+
+   ```bash
+   gh variable set AZURE_BOOTSTRAPPED --repo zh-8/balboa --body true
+   ```
+
+   This is the switch that turns deployment on. `main.yml` decides whether to deploy
+   before it knows which environment it is deploying to, so it cannot read an
+   environment-scoped variable at that point. While it is unset, every merge to `main`
+   still builds and pushes the container image and skips only the deploy, which is what
+   keeps `main` green before Azure exists. It is set last on purpose: a bootstrap that
+   aborts half way must not leave the repository claiming the environment is ready.
+
+   To turn deployment back off — during an incident, or while rebuilding the
+   environment — set it to anything other than `true`:
+
+   ```bash
+   gh variable set AZURE_BOOTSTRAPPED --repo zh-8/balboa --body false
+   ```
 
 7. Set the Postgres Entra administrator and create the database roles for the app and
    migrator identities once the server exists (first CI infrastructure run). Open question:

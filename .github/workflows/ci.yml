@@ -107,8 +107,12 @@ jobs:
           cache: true
           cache-dependency-path: backend/**/packages.lock.json
 
+      # --locked-mode fails if a committed packages.lock.json does not match the
+      # project's declared dependencies, rather than quietly resolving something
+      # newer. A dependency change must therefore arrive with its regenerated lock
+      # file, which is also what makes the cache key above meaningful.
       - name: Restore
-        run: dotnet restore backend/Balboa.slnx
+        run: dotnet restore backend/Balboa.slnx --locked-mode
 
       - name: Formatting
         run: dotnet format backend/Balboa.slnx --verify-no-changes
