@@ -87,7 +87,7 @@ jobs:
             /t:PublishContainer \
             -p ContainerRegistry=${{ env.REGISTRY }} \
             -p ContainerRepository=${{ env.IMAGE_NAME }} \
-            -p ContainerImageTags='${{ github.sha }};latest' \
+            -p ContainerImageTags='"${{ github.sha }};latest"' \
             -p PublishReadyToRun=true \
             -p ContainerBaseImage=mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
 
