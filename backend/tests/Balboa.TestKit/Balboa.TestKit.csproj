@@ -3,6 +3,8 @@
   <!-- Shared test infrastructure: Postgres fixture, Respawn reset, Bogus data, the [Spec] trait. -->
   <ItemGroup>
     <PackageReference Include="Bogus" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Respawn" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Testcontainers.PostgreSql" />
